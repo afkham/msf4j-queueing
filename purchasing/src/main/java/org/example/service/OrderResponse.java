@@ -23,26 +23,11 @@ import java.io.Serializable;
 /**
  * TODO: class level comment
  */
-public class Order implements Serializable {
-    private static final long serialVersionUID = 6867749351899757703L;
+public class OrderResponse implements Serializable {
+    private static final long serialVersionUID = -2011236712112455321L;
 
     private String itemCode;
-    private String name;
-    private int quantity;
-    private String orderId;
-
-    public Order() {
-    }
-
-    public Order(String itemCode) {
-        this.itemCode = itemCode;
-    }
-
-    public Order(String itemCode, String name, int quantity) {
-        this.itemCode = itemCode;
-        this.name = name;
-        this.quantity = quantity;
-    }
+    private int orderQuantity;
 
     public String getItemCode() {
         return itemCode;
@@ -52,37 +37,19 @@ public class Order implements Serializable {
         this.itemCode = itemCode;
     }
 
-    public String getName() {
-        return name;
+    public int getOrderQuantity() {
+        return orderQuantity;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
-
-    public String getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
+    public void setOrderQuantity(int orderQuantity) {
+        this.orderQuantity = orderQuantity;
     }
 
     @Override
     public String toString() {
-        return "Order{" +
+        return "OrderResponse{" +
                 "itemCode='" + itemCode + '\'' +
-                ", name='" + name + '\'' +
-                ", quantity=" + quantity +
-                ", orderId='" + orderId + '\'' +
+                ", orderQuantity=" + orderQuantity +
                 '}';
     }
 }

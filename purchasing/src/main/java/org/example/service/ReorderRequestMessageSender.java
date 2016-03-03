@@ -29,7 +29,7 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
-public class QueueSender {
+public class ReorderRequestMessageSender {
 
     public static final String QPID_ICF = "org.wso2.andes.jndi.PropertiesFileInitialContextFactory";
     private static final String CF_NAME_PREFIX = "connectionfactory.";
@@ -43,7 +43,9 @@ public class QueueSender {
 
     private static String userName = "admin";
     private static String password = "admin";
-    private static String queueName = "testQueue";
+
+    private static String queueName = "reorderRequestQueue";
+//    private static String queueName = "testQueue";
     private static QueueConnection queueConnection;
     private static QueueSession queueSession;
 
@@ -61,9 +63,9 @@ public class QueueSender {
         // Send message
         Queue queue = (Queue) ctx.lookup(queueName);
         // create the message to send
-        ObjectMessage textMessage = queueSession.createObjectMessage(order);
+        ObjectMessage message = queueSession.createObjectMessage(order);
         javax.jms.QueueSender queueSender = queueSession.createSender(queue);
-        queueSender.send(textMessage);
+        queueSender.send(message);
         queueSender.close();
         queueSession.close();
         queueConnection.close();

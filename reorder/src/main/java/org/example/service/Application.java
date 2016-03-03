@@ -16,19 +16,7 @@
 
 package org.example.service;
 
-import org.wso2.msf4j.MicroservicesRunner;
-
-import java.util.Properties;
 import javax.jms.JMSException;
-import javax.jms.Queue;
-import javax.jms.QueueConnection;
-import javax.jms.QueueConnectionFactory;
-import javax.jms.QueueSession;
-import javax.jms.TextMessage;
-import javax.jms.MessageConsumer;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 
 /**
  * Application entry point.
@@ -37,85 +25,7 @@ import javax.naming.NamingException;
  */
 public class Application {
 
-    public static final String QPID_ICF = "org.wso2.andes.jndi.PropertiesFileInitialContextFactory";
-    private static final String CF_NAME_PREFIX = "connectionfactory.";
-    private static final String CF_NAME = "qpidConnectionfactory";
-    private static String CARBON_CLIENT_ID = "carbon";
-    private static String CARBON_VIRTUAL_HOST_NAME = "carbon";
-    private static String CARBON_DEFAULT_HOSTNAME = "localhost";
-    private static String CARBON_DEFAULT_PORT = "5672";
-
-    private String userName = "admin";
-    private String password = "admin";
-    private String queueName = "testQueue";
-    private QueueConnection queueConnection;
-    private QueueSession queueSession;
-
     public static void main(String[] args) throws JMSException {
-        Application queueReceiver = new Application();
-        MessageConsumer consumer = null;
-        try {
-            consumer = queueReceiver.registerSubscriber();
-        } catch (NamingException | JMSException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        try {
-            while(true) {
-                try {
-                    queueReceiver.receiveMessages(consumer);
-                } catch (NamingException | JMSException e) {
-                    e.printStackTrace();
-                    System.exit(1);
-                }
-            }
-        } finally {
-            // Housekeeping
-            queueReceiver.cleanup(consumer);
-        }
-
-//        new MicroservicesRunner()
-//                .deploy(new ReorderService())
-//                .start();
-    }
-
-    private void cleanup(MessageConsumer consumer) throws JMSException {
-        consumer.close();
-        queueSession.close();
-        queueConnection.stop();
-        queueConnection.close();
-    }
-
-    public MessageConsumer registerSubscriber() throws NamingException, JMSException{
-        Properties properties = new Properties();
-        properties.put(Context.INITIAL_CONTEXT_FACTORY, QPID_ICF);
-        properties.put(CF_NAME_PREFIX + CF_NAME, getTCPConnectionURL(userName, password));
-        properties.put("queue."+ queueName,queueName);
-        InitialContext ctx = new InitialContext(properties);
-        // Lookup connection factory
-        QueueConnectionFactory connFactory = (QueueConnectionFactory) ctx.lookup(CF_NAME);
-        queueConnection = connFactory.createQueueConnection();
-        queueConnection.start();
-        queueSession =
-                queueConnection.createQueueSession(false, QueueSession.AUTO_ACKNOWLEDGE);
-        //Receive message
-        Queue queue =  (Queue) ctx.lookup(queueName);
-        MessageConsumer consumer = queueSession.createConsumer(queue);
-        return consumer;
-    }
-
-    public void receiveMessages(MessageConsumer consumer) throws NamingException, JMSException {
-
-        TextMessage message = (TextMessage) consumer.receive();
-        System.out.println("Got message from queue receiver==>" + message.getText());
-
-
-    }
-
-    private String getTCPConnectionURL(String username, String password) {
-        // amqp://{username}:{password}@carbon/carbon?brokerlist='tcp://{hostname}:{port}'
-        return "amqp://"+ username + ":" + password + "@" + CARBON_CLIENT_ID+ "/" + CARBON_VIRTUAL_HOST_NAME +
-                "?brokerlist='tcp://" + CARBON_DEFAULT_HOSTNAME + ":" + CARBON_DEFAULT_PORT + "'";
+        new ReorderRequestMessageListener();
     }
 }

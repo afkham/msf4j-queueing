@@ -16,15 +16,10 @@
 
 package org.example.service;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import javax.jms.JMSException;
 import javax.naming.NamingException;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
@@ -40,39 +35,41 @@ public class PurchasingService {
     private static final int REORDER_LEVEL = 100;
     private static final int REORDER_QUANTITY = 50;
 
-    private Map<String, Integer> inventory = new HashMap<>();
-
     public PurchasingService() {
-        inventory.put("i001", 200);
-        inventory.put("i002", 150);
+        InventoryManager.add("i001", 200);
+        InventoryManager.add("i002", 150);
     }
 
     @POST
     @Path("/")
     public Response post(Order order) {
         String itemCode = order.getItemCode();
-        if(inventory.get(itemCode) == null) {
+        if (!InventoryManager.itemExists(itemCode)) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        if(inventory.get(itemCode) < order.getQuantity()) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Insufficient stock").build();
-        }
-
-        inventory.put(itemCode, inventory.get(itemCode) - order.getQuantity());
-
-        if(inventory.get(itemCode) <= REORDER_LEVEL) {
+        UUID orderId = UUID.randomUUID();
+        if (InventoryManager.getQuantity(itemCode) <= REORDER_LEVEL) {
+            order.setOrderId(orderId.toString());
             reorder(order);
         }
-        return Response.status(Response.Status.OK).entity(UUID.randomUUID()).build();
+        if (InventoryManager.getQuantity(itemCode) < order.getQuantity()) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Insufficient stock").build();
+        }
+        InventoryManager.remove(itemCode, order.getQuantity());
+        UUID orderId2 = UUID.randomUUID();
+        if (InventoryManager.getQuantity(itemCode) <= REORDER_LEVEL) {
+            order.setOrderId(orderId2.toString());
+            reorder(order);
+        }
+
+        return Response.status(Response.Status.OK).entity(orderId).build();
     }
 
     private void reorder(Order order) {
         System.out.println("Reordering item: " + order.getItemCode());
         order.setQuantity(REORDER_QUANTITY);
         try {
-            QueueSender.sendMessage(order);
-
-            // TODO Wait for reorder to come on another queue
+            ReorderRequestMessageSender.sendMessage(order);
         } catch (NamingException | JMSException e) {
             e.printStackTrace();
         }

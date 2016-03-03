@@ -25,6 +25,7 @@ import org.wso2.msf4j.MicroservicesRunner;
  */
 public class Application {
     public static void main(String[] args) {
+        new ReorderResponseMessageListener();
         new MicroservicesRunner()
                 .deploy(new PurchasingService())
                 .start();
