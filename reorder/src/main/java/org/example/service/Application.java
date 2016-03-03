@@ -112,13 +112,10 @@ public class Application {
 
 
     }
+
     private String getTCPConnectionURL(String username, String password) {
         // amqp://{username}:{password}@carbon/carbon?brokerlist='tcp://{hostname}:{port}'
-        return new StringBuffer()
-                .append("amqp://").append(username).append(":").append(password)
-                .append("@").append(CARBON_CLIENT_ID)
-                .append("/").append(CARBON_VIRTUAL_HOST_NAME)
-                .append("?brokerlist='tcp://").append(CARBON_DEFAULT_HOSTNAME).append(":").append(CARBON_DEFAULT_PORT).append("'")
-                .toString();
+        return "amqp://"+ username + ":" + password + "@" + CARBON_CLIENT_ID+ "/" + CARBON_VIRTUAL_HOST_NAME +
+                "?brokerlist='tcp://" + CARBON_DEFAULT_HOSTNAME + ":" + CARBON_DEFAULT_PORT + "'";
     }
 }
