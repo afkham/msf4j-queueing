@@ -19,6 +19,8 @@ package org.example.service;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import javax.jms.JMSException;
+import javax.naming.NamingException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -36,6 +38,7 @@ import javax.ws.rs.core.Response;
 @Path("/purchasing")
 public class PurchasingService {
     private static final int REORDER_LEVEL = 100;
+    private static final int REORDER_QUANTITY = 50;
 
     private Map<String, Integer> inventory = new HashMap<>();
 
@@ -58,12 +61,20 @@ public class PurchasingService {
         inventory.put(itemCode, inventory.get(itemCode) - order.getQuantity());
 
         if(inventory.get(itemCode) <= REORDER_LEVEL) {
-            reorder();
+            reorder(order);
         }
         return Response.status(Response.Status.OK).entity(UUID.randomUUID()).build();
     }
 
-    private void reorder() {
-        // TODO: Impl
+    private void reorder(Order order) {
+        System.out.println("Reordering item: " + order.getItemCode());
+        order.setQuantity(REORDER_QUANTITY);
+        try {
+            QueueSender.sendMessage(order);
+
+            // TODO Wait for reorder to come on another queue
+        } catch (NamingException | JMSException e) {
+            e.printStackTrace();
+        }
     }
 }

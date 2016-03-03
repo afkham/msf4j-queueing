@@ -18,10 +18,12 @@
  */
 package org.example.service;
 
+import java.io.Serializable;
+
 /**
  * TODO: class level comment
  */
-public class Order {
+public class Order implements Serializable {
     private String itemCode;
     private String name;
     private int quantity;

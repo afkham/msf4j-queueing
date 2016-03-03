@@ -20,11 +20,11 @@ package org.example.service;
 
 import java.util.Properties;
 import javax.jms.JMSException;
+import javax.jms.ObjectMessage;
 import javax.jms.Queue;
 import javax.jms.QueueConnection;
 import javax.jms.QueueConnectionFactory;
 import javax.jms.QueueSession;
-import javax.jms.TextMessage;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -41,13 +41,13 @@ public class QueueSender {
     private static final String CARBON_DEFAULT_HOSTNAME = "localhost";
     private static final String CARBON_DEFAULT_PORT = "5672";
 
-    private String userName = "admin";
-    private String password = "admin";
-    private String queueName = "testQueue";
-    private QueueConnection queueConnection;
-    private QueueSession queueSession;
+    private static String userName = "admin";
+    private static String password = "admin";
+    private static String queueName = "testQueue";
+    private static QueueConnection queueConnection;
+    private static QueueSession queueSession;
 
-    public void sendMessages() throws NamingException, JMSException {
+    public static void sendMessage(Order order) throws NamingException, JMSException {
         Properties properties = new Properties();
         properties.put(Context.INITIAL_CONTEXT_FACTORY, QPID_ICF);
         properties.put(CF_NAME_PREFIX + CF_NAME, getTCPConnectionURL(userName, password));
@@ -59,19 +59,20 @@ public class QueueSender {
         queueConnection.start();
         queueSession = queueConnection.createQueueSession(false, QueueSession.AUTO_ACKNOWLEDGE);
         // Send message
-        Queue queue = (Queue)ctx.lookup(queueName);
+        Queue queue = (Queue) ctx.lookup(queueName);
         // create the message to send
-        TextMessage textMessage = queueSession.createTextMessage("Test Message Content");
+        ObjectMessage textMessage = queueSession.createObjectMessage(order);
         javax.jms.QueueSender queueSender = queueSession.createSender(queue);
         queueSender.send(textMessage);
         queueSender.close();
         queueSession.close();
         queueConnection.close();
     }
-    private String getTCPConnectionURL(String username, String password) {
+
+    private static String getTCPConnectionURL(String username, String password) {
         // amqp://{username}:{password}@carbon/carbon?brokerlist='tcp://{hostname}:{port}'
-        return "amqp://"+ username + ":" + password + "@" + CARBON_CLIENT_ID+ "/" + CARBON_VIRTUAL_HOST_NAME +
+        return "amqp://" + username + ":" + password + "@" + CARBON_CLIENT_ID + "/" + CARBON_VIRTUAL_HOST_NAME +
                 "?brokerlist='tcp://" + CARBON_DEFAULT_HOSTNAME + ":" + CARBON_DEFAULT_PORT + "'";
     }
- 
+
 }
