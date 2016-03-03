@@ -29,31 +29,28 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
+import static org.example.service.PurchasingServiceConstants.CF_NAME;
+import static org.example.service.PurchasingServiceConstants.CF_NAME_PREFIX;
+import static org.example.service.PurchasingServiceConstants.PASSWORD;
+import static org.example.service.PurchasingServiceConstants.QPID_ICF;
+import static org.example.service.PurchasingServiceConstants.QUEUE_NAME_PREFIX;
+import static org.example.service.PurchasingServiceConstants.USERNAME;
+import static org.example.service.PurchasingServiceConstants.REORDER_REQUEST_QUEUE;
+import static org.example.service.PurchasingServiceConstants.getTCPConnectionURL;
+
+/**
+ * Handles sending of reorder requests.
+ */
 public class ReorderRequestMessageSender {
 
-    public static final String QPID_ICF = "org.wso2.andes.jndi.PropertiesFileInitialContextFactory";
-    private static final String CF_NAME_PREFIX = "connectionfactory.";
-    private static final String QUEUE_NAME_PREFIX = "queue.";
-    private static final String CF_NAME = "qpidConnectionfactory";
-
-    private static final String CARBON_CLIENT_ID = "carbon";
-    private static final String CARBON_VIRTUAL_HOST_NAME = "carbon";
-    private static final String CARBON_DEFAULT_HOSTNAME = "localhost";
-    private static final String CARBON_DEFAULT_PORT = "5672";
-
-    private static String userName = "admin";
-    private static String password = "admin";
-
-    private static String queueName = "reorderRequestQueue";
-//    private static String queueName = "testQueue";
     private static QueueConnection queueConnection;
     private static QueueSession queueSession;
 
     public static void sendMessage(Order order) throws NamingException, JMSException {
         Properties properties = new Properties();
         properties.put(Context.INITIAL_CONTEXT_FACTORY, QPID_ICF);
-        properties.put(CF_NAME_PREFIX + CF_NAME, getTCPConnectionURL(userName, password));
-        properties.put(QUEUE_NAME_PREFIX + queueName, queueName);
+        properties.put(CF_NAME_PREFIX + CF_NAME, getTCPConnectionURL(USERNAME, PASSWORD));
+        properties.put(QUEUE_NAME_PREFIX + REORDER_REQUEST_QUEUE, REORDER_REQUEST_QUEUE);
         InitialContext ctx = new InitialContext(properties);
         // Lookup connection factory
         QueueConnectionFactory connFactory = (QueueConnectionFactory) ctx.lookup(CF_NAME);
@@ -61,7 +58,7 @@ public class ReorderRequestMessageSender {
         queueConnection.start();
         queueSession = queueConnection.createQueueSession(false, QueueSession.AUTO_ACKNOWLEDGE);
         // Send message
-        Queue queue = (Queue) ctx.lookup(queueName);
+        Queue queue = (Queue) ctx.lookup(REORDER_REQUEST_QUEUE);
         // create the message to send
         ObjectMessage message = queueSession.createObjectMessage(order);
         javax.jms.QueueSender queueSender = queueSession.createSender(queue);
@@ -70,11 +67,4 @@ public class ReorderRequestMessageSender {
         queueSession.close();
         queueConnection.close();
     }
-
-    private static String getTCPConnectionURL(String username, String password) {
-        // amqp://{username}:{password}@carbon/carbon?brokerlist='tcp://{hostname}:{port}'
-        return "amqp://" + username + ":" + password + "@" + CARBON_CLIENT_ID + "/" + CARBON_VIRTUAL_HOST_NAME +
-                "?brokerlist='tcp://" + CARBON_DEFAULT_HOSTNAME + ":" + CARBON_DEFAULT_PORT + "'";
-    }
-
 }

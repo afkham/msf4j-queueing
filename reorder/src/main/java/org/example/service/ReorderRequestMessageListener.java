@@ -32,40 +32,34 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
+import static org.example.service.ReorderServiceConstants.CF_NAME;
+import static org.example.service.ReorderServiceConstants.CF_NAME_PREFIX;
+import static org.example.service.ReorderServiceConstants.PASSWORD;
+import static org.example.service.ReorderServiceConstants.QPID_ICF;
+import static org.example.service.ReorderServiceConstants.QUEUE_NAME_PREFIX;
+import static org.example.service.ReorderServiceConstants.REORDER_REQUEST_QUEUE;
+import static org.example.service.ReorderServiceConstants.USERNAME;
+import static org.example.service.ReorderServiceConstants.getTCPConnectionURL;
+
 /**
- * TODO: class level comment
+ * Receives reorder request messages.
  */
 public class ReorderRequestMessageListener implements MessageListener {
-
-    public static final String QPID_ICF = "org.wso2.andes.jndi.PropertiesFileInitialContextFactory";
-    private static final String CF_NAME_PREFIX = "connectionfactory.";
-    private static final String CF_NAME = "qpidConnectionfactory";
-    private static String CARBON_CLIENT_ID = "carbon";
-    private static String CARBON_VIRTUAL_HOST_NAME = "carbon";
-    private static String CARBON_DEFAULT_HOSTNAME = "localhost";
-    private static String CARBON_DEFAULT_PORT = "5672";
-
-    private String userName = "admin";
-    private String password = "admin";
-    private String reorderRequestQueue = "reorderRequestQueue";
-    private QueueConnection queueConnection;
-    private QueueSession queueSession;
 
     public ReorderRequestMessageListener() {
         try {
             Properties properties = new Properties();
             properties.put(Context.INITIAL_CONTEXT_FACTORY, QPID_ICF);
-            properties.put(CF_NAME_PREFIX + CF_NAME, getTCPConnectionURL(userName, password));
-            properties.put("queue." + reorderRequestQueue, reorderRequestQueue);
+            properties.put(CF_NAME_PREFIX + CF_NAME, getTCPConnectionURL(USERNAME, PASSWORD));
+            properties.put(QUEUE_NAME_PREFIX + REORDER_REQUEST_QUEUE, REORDER_REQUEST_QUEUE);
             InitialContext ctx = new InitialContext(properties);
             // Lookup connection factory
             QueueConnectionFactory connFactory = (QueueConnectionFactory) ctx.lookup(CF_NAME);
-            queueConnection = connFactory.createQueueConnection();
+            QueueConnection queueConnection = connFactory.createQueueConnection();
             queueConnection.start();
-            queueSession =
-                    queueConnection.createQueueSession(false, QueueSession.AUTO_ACKNOWLEDGE);
+            QueueSession queueSession = queueConnection.createQueueSession(false, QueueSession.AUTO_ACKNOWLEDGE);
             //Receive message
-            Queue queue = (Queue) ctx.lookup(reorderRequestQueue);
+            Queue queue = (Queue) ctx.lookup(REORDER_REQUEST_QUEUE);
             MessageConsumer consumer = queueSession.createConsumer(queue);
             consumer.setMessageListener(this);
         } catch (NamingException | JMSException e) {
@@ -79,8 +73,8 @@ public class ReorderRequestMessageListener implements MessageListener {
         try {
             Order order = (Order) msg.getObject();
             System.out.println("Got message from queue receiver==>" + order);
-            //TODO send response
 
+            // Send response
             OrderResponse orderResponse = new OrderResponse();
             orderResponse.setItemCode(order.getItemCode());
             orderResponse.setOrderQuantity(order.getQuantity());
@@ -89,11 +83,5 @@ public class ReorderRequestMessageListener implements MessageListener {
         } catch (JMSException | NamingException e) {
             e.printStackTrace();
         }
-    }
-
-    private String getTCPConnectionURL(String username, String password) {
-        // amqp://{username}:{password}@carbon/carbon?brokerlist='tcp://{hostname}:{port}'
-        return "amqp://"+ username + ":" + password + "@" + CARBON_CLIENT_ID+ "/" + CARBON_VIRTUAL_HOST_NAME +
-                "?brokerlist='tcp://" + CARBON_DEFAULT_HOSTNAME + ":" + CARBON_DEFAULT_PORT + "'";
     }
 }

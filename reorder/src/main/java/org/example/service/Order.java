@@ -21,7 +21,7 @@ package org.example.service;
 import java.io.Serializable;
 
 /**
- * TODO: class level comment
+ * Order
  */
 public class Order implements Serializable {
     private static final long serialVersionUID = 6867749351899757703L;
